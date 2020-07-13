@@ -22,18 +22,30 @@ int main() {
       return -1;
   }
 
-  cap.set(CAP_PROP_FRAME_WIDTH, 800);
-  cap.set(CAP_PROP_FRAME_HEIGHT, 600);
-  
-  std::cout << "conn cam " << cap.getBackendName() << std::endl;
+  // cap.set(CAP_PROP_FRAME_WIDTH, 800);
+  // cap.set(CAP_PROP_FRAME_HEIGHT, 600);
+  // std::cout << "conn cam " << cap.getBackendName() << std::endl;
+
     //--- GRAB AND WRITE LOOP
     cout << "Start grabbing" << endl
         << "Press any key to terminate" << endl;
 
-    Mat frame;
+    Mat frame, a,b,diff;
     for (;;) {
         // wait for a new frame from camera and store it into 'frame'
         cap.read(frame);
+        if (0 == a.rows ) {
+          a = frame; 
+          b = frame;
+        }
+        b = a;
+        a = frame;
+        absdiff(a,b,diff);
+        Scalar mean(3), stddev(3);
+        meanStdDev(diff, mean, stddev);
+
+        // cout << "diff mean " << mean.at<double>(0) << " sigma " << stddev.at<double>(0) << endl;
+        cout << "diff mean " << mean << " sigma " << stddev << endl;
         // check if we succeeded
         if (frame.empty()) {
             cerr << "ERROR! blank frame grabbed\n";
