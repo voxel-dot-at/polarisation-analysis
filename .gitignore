@@ -1,0 +1,12 @@
+# build dirs:
+b/
+build/
+
+# editors:
+*~
+*.bak
+
+# compiler:
+*.o
+*.a
+*.so*
