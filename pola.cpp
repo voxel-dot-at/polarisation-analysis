@@ -35,12 +35,15 @@ int main() {
         // wait for a new frame from camera and store it into 'frame'
         cap.read(frame);
         if (0 == a.rows ) {
-          a = frame; 
-          b = frame;
+	  cout << "init " << frame.cols << "x" << frame.rows << " " << endl;
+          frame.copyTo(a); 
+          frame.copyTo(b);
         }
-        b = a;
-        a = frame;
-        absdiff(a,b,diff);
+	a.copyTo(b);
+	frame.copyTo(a);
+	absdiff(a,b,diff);
+	// diff = a - b;
+	
         Scalar mean(3), stddev(3);
         meanStdDev(diff, mean, stddev);
 
@@ -52,7 +55,7 @@ int main() {
             break;
         }
         // show live and wait for a key with timeout long enough to show images
-        imshow("Live", frame);
+        imshow("diff", diff);
         if (waitKey(5) >= 0)
             break;
     }
