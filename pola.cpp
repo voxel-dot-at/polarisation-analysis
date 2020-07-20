@@ -36,24 +36,32 @@ int main() {
     bool changing=false;
     int iter=0;
     for (;;) {
+      struct timespec tstart, tdone;
         // wait for a new frame from camera and store it into 'frame'
         cap.read(frame);
+        clock_gettime(CLOCK_REALTIME, &tstart);
+
         if (0 == a.rows ) {
-	  cout << "init " << frame.cols << "x" << frame.rows << " " << endl;
+          cout << "init " << frame.cols << "x" << frame.rows << " " << endl;
           frame.copyTo(a); 
           frame.copyTo(b);
           frame.copyTo(pb);
         }
-	a.copyTo(b);
-	frame.copyTo(a);
-	absdiff(a,b,diff);
-	// diff = a - b;
+        a.copyTo(b);
+        frame.copyTo(a);
+        absdiff(a,b,diff);
+        // diff = a - b;
 	
         Scalar mean(3), stddev(3);
         meanStdDev(diff, mean, stddev);
-	sigma = (stddev[0] + stddev[1] + stddev[2] ) / 3.;
+        sigma = (stddev[0] + stddev[1] + stddev[2] ) / 3.;
 
-        cout << "diff mean " << mean << "\tsigma " << stddev << "\t\t" << sigma << endl;
+        clock_gettime(CLOCK_REALTIME, &tdone);
+
+        long delta = tdone.tv_nsec - tstart.tv_nsec;
+        if (delta<0) delta += 1000000000;
+        delta /= 1000000; // ms
+        cout << "diff mean " << mean << "\tsigma " << stddev << "\t\t" << sigma << "\t ms= " << delta << endl;
         // check if we succeeded
         if (frame.empty()) {
             cerr << "ERROR! blank frame grabbed\n";
@@ -64,36 +72,40 @@ int main() {
 	//        if (waitKey(5) >= 0)
         //    break;
 
-	// state machine:
-	if (changing) {
-	  if (sigma <= thresh*0.9 ) { // - 10% hysteresis
-	    changing = false;
-	    cout << "changed! " << endl;
+      // state machine:
+      if (changing) {
+        if (sigma <= thresh*0.9 ) { // - 10% hysteresis
+          changing = false;
+          cout << "changed! " << endl;
 
-	    // save current state:
-	    stringstream s;
-	    s << "/tmp/img_" << iter++;
-	    string fname_a = s.str() + "_a.jpg";
-	    string fname_b = s.str() + "_b.jpg";
-	    vector<int> compression_params;
-	    compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
-	    compression_params.push_back(90);
-	    imwrite(fname_a, frame, compression_params);
-	    imwrite(fname_b, pb, compression_params);
-	  }
-	  cout << "changing! " << endl;
-	} else {
-	  if (sigma > thresh) {
-	    changing = true;
-	    b.copyTo(pb); // keep pre-change image
-	  } else {
-	    absdiff(frame, pb, diff);
-	    resize(diff, display, Size(640,480));
-	    imshow("diff", display);
-	    if (waitKey(5) >= 0)
-	      break;
-	  }
-	}
+          // save current state:
+          stringstream s;
+          s << "/tmp/img_" << iter++;
+          string fname_a = s.str() + "_a.jpg";
+          string fname_b = s.str() + "_b.jpg";
+          vector<int> compression_params;
+#if defined CV_IMWRITE_JPEG_QUALITY
+          compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
+#else
+          compression_params.push_back(IMWRITE_JPEG_QUALITY);
+#endif
+          compression_params.push_back(90);
+          imwrite(fname_a, frame, compression_params);
+          imwrite(fname_b, pb, compression_params);
+        }
+        cout << "changing! " << endl;
+      } else {
+        if (sigma > thresh) {
+          changing = true;
+          b.copyTo(pb); // keep pre-change image
+        } else {
+          absdiff(frame, pb, diff);
+          resize(diff, display, Size(640,480));
+          imshow("diff", display);
+          if (waitKey(5) >= 0)
+            break;
+        }
+      }
 	
     }
     // the camera will be deinitialized automatically in VideoCapture destructor

@@ -10,3 +10,6 @@ build/
 *.o
 *.a
 *.so*
+
+# data files
+capture-*
