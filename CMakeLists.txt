@@ -17,4 +17,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_executable(pola pola.cpp )
 target_link_libraries (pola ${EXTRA_LIBS} ${OpenCV_LIBS}  )
 
-INSTALL(TARGETS pola DESTINATION bin)
+add_executable(compute_diffs compute_diffs.cpp )
+target_link_libraries (compute_diffs ${EXTRA_LIBS} ${OpenCV_LIBS}  )
+
+
+INSTALL(TARGETS compute_diffs pola DESTINATION bin)
